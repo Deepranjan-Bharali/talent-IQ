@@ -18,11 +18,17 @@ app.get("/books", (req, res) => {
 
 // make our app ready for deployment
 if (ENV.NODE_ENV === "production") {
-    app.use(express.static(path.join(__dirname, "../../frontend/dist")))
+    const staticPath = path.join(__dirname, "../../frontend/dist");
+    console.log("NODE_ENV:", ENV.NODE_ENV);
+    console.log("__dirname:", __dirname);
+    console.log("Static path:", staticPath);
+    app.use(express.static(staticPath))
 
     app.get("*", (req, res) => {
         res.sendFile(path.join(__dirname, "../../frontend/dist/index.html"))
     });
+} else {
+    console.log("Not in production mode, NODE_ENV:", ENV.NODE_ENV);
 }
 
 app.listen(ENV.PORT, () => {
