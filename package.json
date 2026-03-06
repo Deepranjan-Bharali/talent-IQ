@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "npm ci --prefix backend && npm ci --prefix frontend && npm run build --prefix frontend",
+    "version-check": "node --version && npm --version",
+    "build": "npm run version-check && npm ci --prefix backend && npm ci --prefix frontend && npm run build --prefix frontend",
     "start": "npm run start --prefix backend"
   },
   "keywords": [],
