@@ -21,7 +21,7 @@ const syncUser = inngest.createFunction(
             profileImage:image_url
         }
 
-        await User.create(newUser)
+        await User.findOneAndUpdate(newUser)
 
         await upsertStreamUser({
             id: newUser.clerkId.toString(),
@@ -29,7 +29,7 @@ const syncUser = inngest.createFunction(
             image: newUser.profileImage,
         });
     }
-)
+);
 
 const deleteUserFromDB = inngest.createFunction(
     {id:"delete-user-from-db"},
