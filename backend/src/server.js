@@ -9,7 +9,7 @@ import {serve} from "inngest/express";
 const app = express();
 const __dirname = path.resolve();
 
-Middleware
+//Middleware
 app.use(express.json());
 app.use(cors({origin:ENV.CLIENT_URL,credentials:true}));
 // app.use(express.urlencoded({ extended: true }));
