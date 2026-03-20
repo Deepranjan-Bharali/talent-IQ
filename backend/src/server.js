@@ -8,6 +8,7 @@ import { inngest, functions } from "./lib/inngest.js";
 import {clerkMiddleware} from "@clerk/express"
 import { protectRoute } from "./middleware/protectRoute.js";
 import chatRoutes from "./routes/chatRoutes.js"
+import sessionRoutes from "./routes/sessionRoute.js"
 
 const app = express();
 const __dirname = path.resolve();
@@ -20,7 +21,7 @@ app.use(clerkMiddleware());// adds auth field to req obj
 
 app.use("/api/inngest",serve({client:inngest,functions}))
 app.use("/api/chat",chatRoutes)
-
+app.use("/api/sessions",sessionRoutes)
 
 app.get("/health", (req, res) => {
     req.auth;
