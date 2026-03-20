@@ -5,7 +5,9 @@ import {connectDB} from "./lib/db.js";
 import cors from "cors";
 import {serve} from "inngest/express";
 import { inngest, functions } from "./lib/inngest.js";
-
+import {clerkMiddleware} from "@clerk/express"
+import { protectRoute } from "./middleware/protectRoute.js";
+import chatRoutes from "./routes/chatRoutes.js"
 
 const app = express();
 const __dirname = path.resolve();
@@ -13,17 +15,18 @@ const __dirname = path.resolve();
 //Middleware
 app.use(express.json());
 app.use(cors({origin:ENV.CLIENT_URL,credentials:true}));
-// app.use(express.urlencoded({ extended: true }));
+app.use(clerkMiddleware());// adds auth field to req obj
+
 
 app.use("/api/inngest",serve({client:inngest,functions}))
-// Routes
+app.use("/api/chat",chatRoutes)
+
+
 app.get("/health", (req, res) => {
+    req.auth;
     res.status(200).json({ message: "api is up running" });
 });
 
-app.get("/books", (req, res) => {
-    res.status(200).json({ message: "books api is up running" });
-});
 
 // Serve static files and SPA in production
 if (ENV.NODE_ENV === "production") {
