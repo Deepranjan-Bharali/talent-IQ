@@ -10,6 +10,8 @@ import { getDifficultyBadgeClass } from "../lib/utils";
 import { Loader2Icon, LogOutIcon, PhoneOffIcon } from "lucide-react";
 import CodeEditorPanel from "../components/CodeEditorPanel";
 import OutputPanel from "../components/OutputPanel";
+import AiAssistantPanel from "../components/AiAssistantPanel";
+import { aiApi } from "../api/ai";
 
 import useStreamClient from "../hooks/useStreamClient";
 import { StreamCall, StreamVideo } from "@stream-io/video-react-sdk";
@@ -45,6 +47,35 @@ function SessionPage() {
 
   const [selectedLanguage, setSelectedLanguage] = useState("javascript");
   const [code, setCode] = useState(problemData?.starterCode?.[selectedLanguage] || "");
+  const [aiResponse, setAiResponse] = useState("");
+  const [aiError, setAiError] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const handleAskAi = async ({ prompt, mode }) => {
+    if (!prompt?.trim()) return;
+    setAiLoading(true);
+    setAiError(null);
+    setAiResponse("");
+
+    try {
+      const response = await aiApi.askChat({
+        prompt,
+        mode,
+        context: {
+          problemDescription: problemData?.description?.text || session?.problem || "",
+          language: selectedLanguage,
+          code,
+          difficulty: session?.difficulty,
+          topic: problemData?.category || "general programming",
+        },
+      });
+      setAiResponse(response.aiResponse || "No response from AI.");
+    } catch (error) {
+      setAiError(error?.response?.data?.message || error?.message || "AI request failed.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   // auto-join session if user is not already a participant and not the host
   useEffect(() => {
@@ -52,9 +83,7 @@ function SessionPage() {
     if (isHost || isParticipant) return;
 
     joinSessionMutation.mutate(id, { onSuccess: refetch });
-
-    // remove the joinSessionMutation, refetch from dependencies to avoid infinite loop
-  }, [session, user, loadingSession, isHost, isParticipant, id]);
+  }, [session, user, loadingSession, isHost, isParticipant, id, joinSessionMutation, refetch]);
 
   // redirect the "participant" when session ends
   useEffect(() => {
@@ -256,36 +285,53 @@ function SessionPage() {
 
           {/* RIGHT PANEL - VIDEO CALLS & CHAT */}
           <Panel defaultSize={50} minSize={30}>
-            <div className="h-full bg-base-200 p-4 overflow-auto">
-              {isInitializingCall ? (
-                <div className="h-full flex items-center justify-center">
-                  <div className="text-center">
-                    <Loader2Icon className="w-12 h-12 mx-auto animate-spin text-primary mb-4" />
-                    <p className="text-lg">Connecting to video call...</p>
-                  </div>
-                </div>
-              ) : !streamClient || !call ? (
-                <div className="h-full flex items-center justify-center">
-                  <div className="card bg-base-100 shadow-xl max-w-md">
-                    <div className="card-body items-center text-center">
-                      <div className="w-24 h-24 bg-error/10 rounded-full flex items-center justify-center mb-4">
-                        <PhoneOffIcon className="w-12 h-12 text-error" />
+            <PanelGroup direction="vertical">
+              <Panel defaultSize={60} minSize={35}>
+                <div className="h-full bg-base-200 p-4 overflow-auto">
+                  {isInitializingCall ? (
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <Loader2Icon className="w-12 h-12 mx-auto animate-spin text-primary mb-4" />
+                        <p className="text-lg">Connecting to video call...</p>
                       </div>
-                      <h2 className="card-title text-2xl">Connection Failed</h2>
-                      <p className="text-base-content/70">Unable to connect to the video call</p>
                     </div>
-                  </div>
+                  ) : !streamClient || !call ? (
+                    <div className="h-full flex items-center justify-center">
+                      <div className="card bg-base-100 shadow-xl max-w-md">
+                        <div className="card-body items-center text-center">
+                          <div className="w-24 h-24 bg-error/10 rounded-full flex items-center justify-center mb-4">
+                            <PhoneOffIcon className="w-12 h-12 text-error" />
+                          </div>
+                          <h2 className="card-title text-2xl">Connection Failed</h2>
+                          <p className="text-base-content/70">Unable to connect to the video call</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-full">
+                      <StreamVideo client={streamClient}>
+                        <StreamCall call={call}>
+                          <VideoCallUI chatClient={chatClient} channel={channel} />
+                        </StreamCall>
+                      </StreamVideo>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="h-full">
-                  <StreamVideo client={streamClient}>
-                    <StreamCall call={call}>
-                      <VideoCallUI chatClient={chatClient} channel={channel} />
-                    </StreamCall>
-                  </StreamVideo>
+              </Panel>
+
+              <PanelResizeHandle className="h-2 bg-base-300 hover:bg-primary transition-colors cursor-row-resize" />
+
+              <Panel defaultSize={40} minSize={25}>
+                <div className="h-full p-4">
+                  <AiAssistantPanel
+                    onSubmit={handleAskAi}
+                    isLoading={aiLoading}
+                    response={aiResponse}
+                    error={aiError}
+                  />
                 </div>
-              )}
-            </div>
+              </Panel>
+            </PanelGroup>
           </Panel>
         </PanelGroup>
       </div>

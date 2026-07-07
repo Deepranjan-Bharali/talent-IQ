@@ -11,4 +11,7 @@ export const ENV={
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
     STREAM_API_KEY: process.env.STREAM_API_KEY,
     STREAM_API_SECRET: process.env.STREAM_API_SECRET,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    GEMINI_MODEL: process.env.GEMINI_MODEL,
+    GEMINI_API_URL: process.env.GEMINI_API_URL
 }
